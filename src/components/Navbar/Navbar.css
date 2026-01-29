@@ -1,0 +1,22 @@
+.navbar{
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: black;
+    gap:40px;
+    margin-top: 30px;
+}
+
+.navbar h1{
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.navbar p{
+    font-size: 16px;
+    border-radius: 50px;
+    background-color: #d9d9d9;
+    padding: 5px 20px;
+}
+
