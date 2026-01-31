@@ -1,10 +1,13 @@
 import React from 'react'
 import './Dashboard.css'
+import SensorOverview from '../../components/SensorOverview/SensorOverview'
 
 const Dashboard = () => {
   return (
-    <div>
-      Hello
+    <div className="dashboard">
+      <div className='sensor-overview'>
+        <SensorOverview/> 
+      </div>
     </div>
   )
 }

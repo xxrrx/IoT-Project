@@ -1,0 +1,191 @@
+.card {
+  position: relative;
+  width: 730px;
+  height: 450px;
+  border-radius: 40px;
+  background: linear-gradient(to bottom, #FFA567, #f97316);
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+.content {
+  height: 323px;
+  padding: 20px 32px;
+}
+
+.content .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: transparent;
+  border: 2px solid white;
+  border-radius: 30px;
+  color: white;
+  cursor: pointer;
+  padding: 5px 15px;
+  box-shadow:0px 1px 4px rgba(2, 2, 2, 0.295);
+}
+
+.filter:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.filter p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.filter img {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+  transition: transform 0.3s ease;
+}
+
+.filter:hover img {
+  transform: rotate(180deg);
+}
+
+.content h2{
+  font-size: 24px;
+  color: #fff;
+  font-weight: bold;
+  margin: 0;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 170px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  isolation: isolate;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #EA580C;
+  clip-path: path('M0.637258 0.0409546C-0.42786 13.0019 4.23203 39.4148 31.3925 41.3795H215.342C224.396 41.6523 242.902 48.3374 244.5 72.8949L244.5 115.041C245.033 124.045 251.13 142.709 271.261 145.329H454.739C462.062 145.056 477.666 138.616 481.5 115.041L481.5 72.8949C481.633 62.3898 487.731 41.3795 511.057 41.3795H700.819C711.47 40.4244 732.293 30.8197 730.376 0.0409546V208.041H0.637258V0.0409546Z');
+  filter: drop-shadow(0 -3px 0 rgba(255, 255, 255, 0.8));
+  z-index: -1;
+}
+
+.item {
+  text-align: center;
+  position: relative;
+  padding: 30px 50px 0;
+  flex: 1;
+}
+
+.item p {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.item h2 {
+  font-size: 32px;
+  margin: 10px 0 20px 0;
+  font-weight: bold;
+}
+
+
+.sensor-overview{
+  display: flex;
+  flex-direction: row;
+  gap: 50px;
+}
+
+.card-sensor{
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.sensor-item{
+  margin-bottom: 10px;
+}
+
+.sensor-item h3{
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 5px 15px;
+}
+
+.card-data{
+  background: linear-gradient(to bottom, #11B4D4, rgba(0, 205, 246, 0.3));
+  border-radius: 40px;
+  padding: 15px 80px 20px 15px;
+  box-shadow:1px 4px 4px rgba(2, 2, 2, 0.295);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.card-data .icon-wrapper {
+  background: #6DDDEE;
+  border-radius: 25px;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 1px 4px 4px rgba(2, 2, 2, 0.295);
+}
+
+.card-data img{
+  width: 35px;
+  height: 35px;
+  filter: brightness(0) invert(1) drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.card-data p{
+  font-size: 32px;
+  color: white;
+  font-weight: bold;
+  margin-left: 15px;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0px rgb(0, 0, 0);
+}
+
+.sensor-item.humidity .card-data {
+  background: linear-gradient(to bottom, #11B4D4, rgba(0, 205, 246, 0.3));
+}
+
+.sensor-item.humidity .icon-wrapper {
+  background: #6DDDEE;
+}
+
+.sensor-item.temperature .card-data {
+  background: linear-gradient(to bottom, #F97316, rgba(249, 115, 22, 0.3));
+}
+
+.sensor-item.temperature .icon-wrapper {
+  background: #F59654;
+}
+
+.sensor-item.light .card-data {
+  background: linear-gradient(to bottom, #FFD93D, rgba(255, 217, 61, 0.3));
+}
+
+.sensor-item.light .icon-wrapper {
+  background: #FFE66D;
+}
+  
