@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import './SwitchCard.css'
 import { assets } from '../../assets/assets'
 
-const SwitchCard = ({ icon, name, defaultState = false }) => {
+const SwitchCard = ({ icon = assets.lightbulb, name = 'device', displayName = 'Thiết bị', defaultState = false }) => {
   const [isOn, setIsOn] = useState(defaultState)
 
   const handleToggle = () => {
     setIsOn(!isOn)
+    // TODO: Gửi request lên server để điều khiển thiết bị
+    console.log(`${name} is now ${!isOn ? 'ON' : 'OFF'}`)
   }
 
   return (
@@ -17,7 +19,7 @@ const SwitchCard = ({ icon, name, defaultState = false }) => {
         </div>
       </div>
       <div className="card-body">
-        <h3>Đèn điện</h3>
+        <h3>{displayName}</h3>
         <div className="toggle-wrapper">
           <input 
             type="checkbox" 
