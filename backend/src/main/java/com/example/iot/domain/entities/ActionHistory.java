@@ -9,6 +9,7 @@ import java.util.UUID;
 @Table(name = "action_history")
 public class ActionHistory {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id",nullable = false,updatable = false)
     private UUID id;
 
@@ -19,6 +20,10 @@ public class ActionHistory {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DeviceStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DeviceStatus action;
 
     @Column(name = "performed_at", nullable = false)
     private LocalDateTime performedAt;

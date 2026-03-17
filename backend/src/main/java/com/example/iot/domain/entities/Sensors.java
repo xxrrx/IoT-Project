@@ -10,14 +10,14 @@ import java.util.UUID;
 @Table(name = "sensors")
 public class Sensors {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id",nullable = false,updatable = false)
     private UUID id;
 
     @Column(name = "name",nullable = false)
-    private String nanme;
+    private String name;
 
-    @OneToMany(mappedBy= "sensor",fetch = FetchType.LAZY)
+    @OneToMany(mappedBy= "sensors",fetch = FetchType.LAZY)
     private List<SensorData> sensorData;
 
     @Column(name = "sensor_type",nullable = false)
