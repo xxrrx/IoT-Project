@@ -1,0 +1,13 @@
+.chart-container {
+  width: 109%;
+  height: 90%;
+  margin-left: -40px;
+}
+
+.chart-container .recharts-wrapper {
+  font-family: inherit;
+}
+
+.chart-container .recharts-cartesian-grid-horizontal line {
+  stroke-opacity: 1;
+}
