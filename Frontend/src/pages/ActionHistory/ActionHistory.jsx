@@ -8,19 +8,24 @@ const ActionHistory = () => {
   const [deviceFilter, setDeviceFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortOrder, setSortOrder] = useState('desc')
-  const itemsPerPage = 40
+  const [itemsPerPage, setItemsPerPage] = useState(40)
+  const [showItemsDropdown, setShowItemsDropdown] = useState(false)
+  const itemsOptions = [10, 20, 40, 50, 100]
 
   // Dữ liệu mẫu - thay thế bằng data từ API
   const actionHistory = Array.from({ length: 1240 }, (_, index) => {
     const devices = ['Đèn điện', 'Điều hòa', 'Quạt điện']
     const actions = ['On', 'Off']
+    const statuses = ['ON', 'OFF', 'PENDING']
     const device = devices[Math.floor(Math.random() * devices.length)]
     const action = actions[Math.floor(Math.random() * actions.length)]
-    
+    const status = statuses[Math.floor(Math.random() * statuses.length)]
+
     return {
       id: index + 1,
       device: device,
       action: action,
+      status: status,
       timestamp: '03:05:24 17/01/2026'
     }
   })
@@ -124,6 +129,7 @@ const ActionHistory = () => {
                 <th>STT</th>
                 <th>Thiết bị</th>
                 <th>Hành động</th>
+                <th>Trạng thái</th>
                 <th className="sortable" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
                   Thời gian
                   <img src={assets.angleDown} alt="sort" className={`sort-icon ${sortOrder}`} />
@@ -140,6 +146,11 @@ const ActionHistory = () => {
                       {row.action}
                     </span>
                   </td>
+                  <td>
+                    <span className={`status-badge ${row.status.toLowerCase()}`}>
+                      {row.status}
+                    </span>
+                  </td>
                   <td>{row.timestamp}</td>
                 </tr>
               ))}
@@ -153,9 +164,35 @@ const ActionHistory = () => {
           </div>
           
           <div className="pagination-controls">
-            <div className="items-per-page">
-              <span>{itemsPerPage} dòng</span>
-              <img src={assets.angleDown} alt="dropdown" />
+            <div className="items-per-page-wrapper">
+              <div
+                className="items-per-page"
+                onClick={() => setShowItemsDropdown(!showItemsDropdown)}
+              >
+                <span>{itemsPerPage} dòng</span>
+                <img
+                  src={assets.angleDown}
+                  alt="dropdown"
+                  className={showItemsDropdown ? 'rotated' : ''}
+                />
+              </div>
+              {showItemsDropdown && (
+                <ul className="items-dropdown-list">
+                  {itemsOptions.map(opt => (
+                    <li
+                      key={opt}
+                      className={`items-dropdown-item ${opt === itemsPerPage ? 'active' : ''}`}
+                      onClick={() => {
+                        setItemsPerPage(opt)
+                        setCurrentPage(1)
+                        setShowItemsDropdown(false)
+                      }}
+                    >
+                      {opt} dòng
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             
             <button 

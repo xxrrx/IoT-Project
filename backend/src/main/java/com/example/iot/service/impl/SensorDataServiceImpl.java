@@ -7,7 +7,6 @@ import com.example.iot.repository.SensorDataRepository;
 import com.example.iot.repository.SensorsRepository;
 import com.example.iot.service.SensorDataService;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
@@ -18,6 +17,7 @@ public class SensorDataServiceImpl implements SensorDataService {
     private  final SensorsRepository sensorsRepository;
     private final SensorDataRepository sensorDataRepository;
     private final ObjectMapper objectMapper;
+
 
     public SensorDataServiceImpl(SensorsRepository sensorsRepository, SensorDataRepository sensorDataRepository, ObjectMapper objectMapper) {
         this.sensorsRepository = sensorsRepository;
@@ -40,8 +40,9 @@ public class SensorDataServiceImpl implements SensorDataService {
             LocalDateTime now = LocalDateTime.now();
 
             readings.forEach((type, value) -> {
-                if (value == null) return;
-
+                if (value == null){
+                    return;
+                }
                 sensorsRepository.findBySensorType(type).ifPresentOrElse(
                         sensor -> {
                             SensorData entity = new SensorData();
@@ -53,6 +54,7 @@ public class SensorDataServiceImpl implements SensorDataService {
                         },
                         () -> System.err.println("Không tìm thấy sensor với type: " + type)
                 );
+
             });
 
         } catch (Exception e) {
@@ -60,5 +62,14 @@ public class SensorDataServiceImpl implements SensorDataService {
         }
     }
 
-
+    @Override
+    public SensorDataDto sendToFE(String payload) {
+        try {
+            SensorDataDto dto = objectMapper.readValue(payload, SensorDataDto.class);
+            return dto;
+        } catch (Exception e) {
+            System.err.println("Lỗi xử lý MQTT payload: " + e.getMessage());
+            return null;
+        }
+    }
 }

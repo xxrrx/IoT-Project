@@ -8,7 +8,7 @@ const Profile = () => {
     email: 'hellothuan12112004@gmail.com',
     studentId: 'B22DCPT268',
     faculty: 'Đa phương tiện',
-    avatar: 'https://via.placeholder.com/200' // Replace with actual image
+    avatar: assets.avatar 
   }
 
   const resources = [
@@ -94,9 +94,8 @@ const Profile = () => {
                 key={resource.id}
                 href={resource.link}
                 className="resource-card"
-                style={{ backgroundColor: resource.bgColor }}
               >
-                <div className="resource-icon" style={{ backgroundColor: resource.iconColor }}>
+                <div className="resource-icon">
                   <img src={resource.icon} alt={resource.title} />
                 </div>
                 <span className="resource-title">{resource.title}</span>

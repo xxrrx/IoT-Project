@@ -1,15 +1,28 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import './SensorOverview.css'
 import { assets } from '../../assets/assets'
 import Chart from '../Chart/Chart'
+import SensorCards from './SensorCards'
+import { AppContext } from '../../Context/AppContext'
 
 const SensorOverview = () => {
   const [activeSensor, setActiveSensor] = useState('temperature')
+  const { dashboardData, loading, quantity, setQuantity, animateChart } = useContext(AppContext)
 
   const background = {
     humidity: "rgba(123,216,235,0.3), #11B4D4",
     temperature: "#FFA567, #f97316",
     light: "rgba(255,205,0,0.3), #FBDE23"
+  }
+
+  const currentChart = dashboardData?.chartData[activeSensor]
+
+  const formatAvg = (sensor) => {
+    if (!dashboardData) return '...'
+    const val = dashboardData.averages[sensor]
+    if (sensor === 'temperature') return `${val.toFixed(1)} °C`
+    if (sensor === 'humidity') return `${val.toFixed(1)} %`
+    if (sensor === 'light') return `${val.toFixed(0)} lx`
   }
 
   return (
@@ -20,69 +33,54 @@ const SensorOverview = () => {
           <div className="content">
               <div className="header">
                 <h2>Tổng quan</h2>
-                <div className='filter'>
-                  <p>30 dữ liệu gần nhất</p>
-                  <img src={assets.angleDown} alt="" />
-                </div>
+                <select
+                  className='filter'
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                >
+                  {[50, 100, 150, 200, 250].map(n => (
+                    <option key={n} value={n}>{n} dữ liệu gần nhất</option>
+                  ))}
+                </select>
               </div>
-              <Chart activeSensor={activeSensor}/>
+              {loading || !currentChart
+                ? <p style={{ color: 'white', textAlign: 'center', paddingTop: '60px' }}>Đang tải...</p>
+                : <Chart
+                    data={currentChart.data}
+                    yDomain={currentChart.yDomain}
+                    yTicks={currentChart.yTicks}
+                    isAnimationActive={animateChart}
+                  />
+              }
           </div>
           <div className={`footer ${activeSensor}`}>
-              <div 
+              <div
                 className={`item ${activeSensor === 'humidity' ? 'active' : ''}`}
                 onClick={() => setActiveSensor('humidity')}
               >
                 <p>Độ ẩm trung bình</p>
-                <h2>100%</h2>
+                <h2>{formatAvg('humidity')}</h2>
               </div>
 
-              <div 
+              <div
                 className={`item ${activeSensor === 'temperature' ? 'active' : ''}`}
                 onClick={() => setActiveSensor('temperature')}
               >
                 <p>Nhiệt độ trung bình</p>
-                <h2>18.3 °C</h2>
+                <h2>{formatAvg('temperature')}</h2>
               </div>
 
-              <div 
+              <div
                 className={`item ${activeSensor === 'light' ? 'active' : ''}`}
                 onClick={() => setActiveSensor('light')}
               >
                 <p>Ánh sáng trung bình</p>
-                <h2>100 lx</h2>
+                <h2>{formatAvg('light')}</h2>
               </div>
           </div>
       </div>
 
-      <div className="card-sensor">
-        <div className="sensor-item humidity">
-          <h3>Độ ẩm</h3>
-          <div className='card-data'>
-            <div className="icon-wrapper">
-              <img src={assets.droplet} alt="" />
-            </div>
-            <p>100 %</p>
-          </div>
-        </div>
-        <div className="sensor-item temperature">
-          <h3>Nhiệt độ</h3>
-          <div className='card-data'>
-            <div className="icon-wrapper">
-              <img src={assets.temperatureHigh} alt="" />
-            </div>
-            <p>18.3 °C</p>
-          </div>
-        </div>
-        <div className="sensor-item light">
-          <h3>Ánh sáng</h3>
-          <div className='card-data'>
-            <div className="icon-wrapper">
-              <img src={assets.lightbulb} alt="" />
-            </div>
-            <p>100 lx</p>
-          </div>
-        </div>
-      </div>
+      <SensorCards />
     </div>
   )
 }

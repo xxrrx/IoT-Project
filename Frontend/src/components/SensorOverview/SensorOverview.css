@@ -31,10 +31,6 @@
   box-shadow:0px 1px 4px rgba(2, 2, 2, 0.295);
 }
 
-.filter:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .filter p {
   margin: 0;
   font-size: 14px;
@@ -50,6 +46,24 @@
 
 .filter:hover img {
   transform: rotate(180deg);
+}
+
+select.filter {
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+select.filter option {
+  color: #333;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
 }
 
 .content h2{

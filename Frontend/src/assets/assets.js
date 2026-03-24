@@ -14,6 +14,7 @@ import squarePoll from './square-poll-vertical-solid-full.svg'
 import temperatureHigh from './temperature-high-solid-full.svg'
 import user from './user-regular-full.svg'
 import wind from './wind-solid-full.svg'
+import avatar from './avt.jpg'
 
 export const assets = {
     angleDown,
@@ -31,5 +32,6 @@ export const assets = {
     squarePoll,
     temperatureHigh,
     user,
-    wind
+    wind,
+    avatar
 }

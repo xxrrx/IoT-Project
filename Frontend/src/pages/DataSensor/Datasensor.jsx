@@ -7,14 +7,20 @@ const Datasensor = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [sortOrder, setSortOrder] = useState('desc')
-  const itemsPerPage = 40
+  const [itemsPerPage, setItemsPerPage] = useState(40)
+  const [showItemsDropdown, setShowItemsDropdown] = useState(false)
+  const itemsOptions = [10, 20, 40, 50, 100]
 
   // Dữ liệu mẫu - thay thế bằng data từ API
+  const sensorTypes = [
+    { type: 'Nhiệt độ', value: '19 °C' },
+    { type: 'Ánh sáng', value: '100 lx' },
+    { type: 'Độ ẩm', value: '92 %' },
+  ]
   const sensorData = Array.from({ length: 1240 }, (_, index) => ({
     id: index + 1,
-    temperature: 19,
-    light: 100,
-    humidity: 92,
+    sensorType: sensorTypes[index % 3].type,
+    sensorValue: sensorTypes[index % 3].value,
     timestamp: '03:05:24 17/01/2026'
   }))
 
@@ -67,10 +73,10 @@ const Datasensor = () => {
                 onChange={(e) => setFilterType(e.target.value)}
                 className="filter-select"
               >
-                <option value="all">Tất cả tiêu chí</option>
-                <option value="temperature">Nhiệt độ</option>
-                <option value="light">Ánh sáng</option>
-                <option value="humidity">Độ ẩm</option>
+                <option value="all">Tất cả loại cảm biến</option>
+                <option value="Nhiệt độ">Nhiệt độ</option>
+                <option value="Ánh sáng">Ánh sáng</option>
+                <option value="Độ ẩm">Độ ẩm</option>
               </select>
             </div>
             
@@ -103,9 +109,8 @@ const Datasensor = () => {
             <thead>
               <tr>
                 <th>STT</th>
-                <th>Cảm biến nhiệt độ</th>
-                <th>Cảm biến ánh sáng</th>
-                <th>Cảm biến độ ẩm</th>
+                <th>Loại cảm biến</th>
+                <th>Giá trị cảm biến</th>
                 <th className="sortable" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
                   Thời gian
                   <img src={assets.angleDown} alt="sort" className={`sort-icon ${sortOrder}`} />
@@ -116,9 +121,8 @@ const Datasensor = () => {
               {currentData.map((row, index) => (
                 <tr key={row.id}>
                   <td>{startIndex + index + 1}</td>
-                  <td>{row.temperature} °C</td>
-                  <td>{row.light} lx</td>
-                  <td>{row.humidity} %</td>
+                  <td>{row.sensorType}</td>
+                  <td>{row.sensorValue}</td>
                   <td>{row.timestamp}</td>
                 </tr>
               ))}
@@ -132,9 +136,35 @@ const Datasensor = () => {
           </div>
           
           <div className="pagination-controls">
-            <div className="items-per-page">
-              <span>{itemsPerPage} dòng</span>
-              <img src={assets.angleDown} alt="dropdown" />
+            <div className="items-per-page-wrapper">
+              <div
+                className="items-per-page"
+                onClick={() => setShowItemsDropdown(!showItemsDropdown)}
+              >
+                <span>{itemsPerPage} dòng</span>
+                <img
+                  src={assets.angleDown}
+                  alt="dropdown"
+                  className={showItemsDropdown ? 'rotated' : ''}
+                />
+              </div>
+              {showItemsDropdown && (
+                <ul className="items-dropdown-list">
+                  {itemsOptions.map(opt => (
+                    <li
+                      key={opt}
+                      className={`items-dropdown-item ${opt === itemsPerPage ? 'active' : ''}`}
+                      onClick={() => {
+                        setItemsPerPage(opt)
+                        setCurrentPage(1)
+                        setShowItemsDropdown(false)
+                      }}
+                    >
+                      {opt} dòng
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             
             <button 
