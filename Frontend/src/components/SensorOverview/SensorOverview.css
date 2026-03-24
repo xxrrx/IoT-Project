@@ -142,6 +142,8 @@ select.filter option {
   display: flex;
   flex-direction: column;
   gap: 11px;
+  min-width: 270px;
+  flex-shrink: 0;
 }
 
 .sensor-item{
@@ -155,8 +157,22 @@ select.filter option {
   margin: 0 0 5px 15px;
 }
 
+/* Gray state khi giá trị null / chưa có dữ liệu */
+.card-data--null {
+  background: linear-gradient(135deg, #9E9E9E, #BDBDBD) !important;
+  animation: none !important;
+}
+
+.card-data--null::before {
+  display: none;
+}
+
+.card-data--null .icon-wrapper {
+  background: rgba(180, 180, 180, 0.8) !important;
+  animation: none !important;
+}
+
 .card-data{
-  background: linear-gradient(to bottom, #11B4D4, rgba(0, 205, 246, 0.3));
   border-radius: 40px;
   padding: 15px 80px 20px 15px;
   box-shadow:1px 4px 4px rgba(2, 2, 2, 0.295);
@@ -165,6 +181,10 @@ select.filter option {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  width: 330px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .card-data .icon-wrapper {
@@ -193,27 +213,124 @@ select.filter option {
   text-shadow: 2px 2px 0px rgb(0, 0, 0);
 }
 
+/* ==========================================
+   KEYFRAME ANIMATIONS
+   ========================================== */
+
+/* Humidity: wave flow */
+@keyframes humidityWave {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Bubble/float overlay */
+@keyframes bubbleFloat {
+  0%   { transform: translateY(0px) scale(1);    opacity: 0.5; }
+  50%  { transform: translateY(-5px) scale(1.04); opacity: 0.85; }
+  100% { transform: translateY(0px) scale(1);    opacity: 0.5; }
+}
+
+/* Temperature: heat rising */
+@keyframes heatRise {
+  0%   { background-position: 50% 100%; }
+  50%  { background-position: 50% 0%; }
+  100% { background-position: 50% 100%; }
+}
+
+/* Light: glow pulse */
+@keyframes lightGlow {
+  0%   { background-position: 0% 50%;   box-shadow: 1px 4px 4px rgba(2,2,2,0.295); }
+  50%  { background-position: 100% 50%; box-shadow: 0 0 22px rgba(255,217,61,0.75), 1px 4px 8px rgba(2,2,2,0.2); }
+  100% { background-position: 0% 50%;   box-shadow: 1px 4px 4px rgba(2,2,2,0.295); }
+}
+
+/* Icon animations */
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes iconHeat {
+  0%, 100% { transform: scale(1);    box-shadow: 1px 4px 4px rgba(2,2,2,0.295); }
+  50%       { transform: scale(1.06); box-shadow: 0 0 14px rgba(249,115,22,0.65); }
+}
+
+@keyframes iconGlow {
+  0%, 100% { box-shadow: 1px 4px 4px rgba(2,2,2,0.295); }
+  50%       { box-shadow: 0 0 18px rgba(255,217,61,0.85), 1px 4px 4px rgba(2,2,2,0.2); }
+}
+
+/* ==========================================
+   HUMIDITY — Water / Bubble effect
+   ========================================== */
 .sensor-item.humidity .card-data {
-  background: linear-gradient(to bottom, #11B4D4, rgba(0, 205, 246, 0.3));
+  background: linear-gradient(135deg, #11B4D4, #0C56EA, #6DDDEE, #00BCD4);
+  background-size: 400% 400%;
+  animation: humidityWave 5s ease infinite;
+}
+
+/* Floating bubble overlay */
+.sensor-item.humidity .card-data::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 25% 70%, rgba(255,255,255,0.18) 0%, transparent 55%),
+    radial-gradient(circle at 75% 25%, rgba(108,221,238,0.22) 0%, transparent 50%);
+  animation: bubbleFloat 3s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .sensor-item.humidity .icon-wrapper {
-  background: #6DDDEE;
+  background: rgba(109, 221, 238, 0.9);
+  animation: iconFloat 3s ease-in-out infinite;
 }
 
+/* ==========================================
+   TEMPERATURE — Heat / Energy effect
+   ========================================== */
 .sensor-item.temperature .card-data {
-  background: linear-gradient(to bottom, #F97316, rgba(249, 115, 22, 0.3));
+  background: linear-gradient(160deg, #FFA567, #F97316, #EA580C, #FF6B35, #F97316);
+  background-size: 400% 400%;
+  animation: heatRise 4s ease infinite;
+}
+
+/* Heat shimmer overlay */
+.sensor-item.temperature .card-data::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 110%, rgba(255,165,103,0.35) 0%, transparent 65%);
+  animation: bubbleFloat 2.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .sensor-item.temperature .icon-wrapper {
-  background: #F59654;
+  background: rgba(245, 150, 84, 0.9);
+  animation: iconHeat 2.5s ease-in-out infinite;
 }
 
+/* ==========================================
+   LIGHT — Soft Glow / Ambient effect
+   ========================================== */
 .sensor-item.light .card-data {
-  background: linear-gradient(to bottom, #FFD93D, rgba(255, 217, 61, 0.3));
+  background: linear-gradient(135deg, #FFD93D, #FBDE23, #FFF176, #F9A825, #FFD93D);
+  background-size: 400% 400%;
+  animation: lightGlow 4s ease infinite;
+}
+
+/* Glow center overlay */
+.sensor-item.light .card-data::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 60% 40%, rgba(255,255,255,0.38) 0%, transparent 65%);
+  animation: bubbleFloat 3.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .sensor-item.light .icon-wrapper {
-  background: #FFE66D;
+  background: rgba(255, 230, 109, 0.9);
+  animation: iconGlow 3.5s ease-in-out infinite;
 }
-  

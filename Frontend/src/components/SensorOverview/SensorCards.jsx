@@ -11,11 +11,13 @@ const SensorCards = () => {
     return `${value} ${unit}`
   }
 
+  const isNull = (value) => !sensorData || value === null || value === undefined
+
   return (
     <div className="card-sensor">
       <div className="sensor-item humidity">
         <h3>Độ ẩm</h3>
-        <div className="card-data">
+        <div className={`card-data ${isNull(sensorData?.humidity) ? 'card-data--null' : ''}`}>
           <div className="icon-wrapper">
             <img src={assets.droplet} alt="Humidity icon" />
           </div>
@@ -25,7 +27,7 @@ const SensorCards = () => {
 
       <div className="sensor-item temperature">
         <h3>Nhiệt độ</h3>
-        <div className="card-data">
+        <div className={`card-data ${isNull(sensorData?.temperature) ? 'card-data--null' : ''}`}>
           <div className="icon-wrapper">
             <img src={assets.temperatureHigh} alt="Temperature icon" />
           </div>
@@ -35,7 +37,7 @@ const SensorCards = () => {
 
       <div className="sensor-item light">
         <h3>Ánh sáng</h3>
-        <div className="card-data">
+        <div className={`card-data ${isNull(sensorData?.light) ? 'card-data--null' : ''}`}>
           <div className="icon-wrapper">
             <img src={assets.lightbulb} alt="Light icon" />
           </div>
@@ -47,3 +49,4 @@ const SensorCards = () => {
 }
 
 export default SensorCards
+

@@ -140,7 +140,7 @@ void loop() {
         lastMsg = millis();
         float h = dht.readHumidity();
         float t = dht.readTemperature();
-        int light = analogRead(LDR_PIN);
+        int light = 4096 - analogRead(LDR_PIN);
 
         StaticJsonDocument<256> doc;
 

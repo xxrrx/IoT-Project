@@ -112,7 +112,7 @@ const AppContextProvider = ({ children }) => {
       sseRef.current = null
       reconnectTimer.current = setTimeout(() => {
         connectSse()
-      }, 3000)
+      }, 1000)
     }
   }, [])
 
