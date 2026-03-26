@@ -1,9 +1,11 @@
 package com.example.iot.service.impl;
 
 import com.example.iot.domain.dto.DashboardDataDto;
-import com.example.iot.domain.dto.SensorDataDto;
 import com.example.iot.domain.dto.SensorReading;
+import com.example.iot.domain.entities.Device;
+import com.example.iot.domain.enums.DeviceStatus;
 import com.example.iot.domain.enums.SensorType;
+import com.example.iot.repository.DeviceRepository;
 import com.example.iot.repository.SensorDataRepository;
 import com.example.iot.repository.SensorsRepository;
 import com.example.iot.service.DashboardService;
@@ -12,19 +14,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class DashBoardServiceImpl implements DashboardService {
     private final SensorDataRepository sensorDataRepository;
-    private final SensorsRepository sensorsRepository;
-    private final SensorDataService sensorDataService;
+    private final DeviceRepository deviceRepository;
 
-
-    public DashBoardServiceImpl(SensorDataRepository sensorDataRepository, SensorsRepository sensorsRepository, SensorDataService sensorDataService) {
+    public DashBoardServiceImpl(SensorDataRepository sensorDataRepository, DeviceRepository deviceRepository) {
         this.sensorDataRepository = sensorDataRepository;
-        this.sensorsRepository = sensorsRepository;
-        this.sensorDataService = sensorDataService;
+        this.deviceRepository = deviceRepository;
     }
 
     @Override
@@ -50,5 +52,15 @@ public class DashBoardServiceImpl implements DashboardService {
                 avarageLight
         );
         return dashboardDataDto;
+    }
+
+    @Override
+    public Map<String, DeviceStatus> getAllDashboardLedState() {
+        List<Device> list = deviceRepository.findAll();
+        Map<String,DeviceStatus> map = new HashMap<>();
+        for (Device device : list){
+            map.put(device.getName(),device.getCurrentStatus());
+        }
+        return map;
     }
 }

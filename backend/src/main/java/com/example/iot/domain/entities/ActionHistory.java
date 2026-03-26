@@ -1,6 +1,7 @@
 package com.example.iot.domain.entities;
 
 import com.example.iot.domain.enums.DeviceStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class ActionHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id", nullable = false)
+    @JsonIgnore
     private Device device;
 
     @Enumerated(EnumType.STRING)

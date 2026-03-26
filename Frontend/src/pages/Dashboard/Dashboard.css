@@ -9,3 +9,70 @@
     flex-shrink: 0;
     gap: 30px;
 }
+
+/* Error modal */
+.error-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+.error-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    width: 360px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: popIn 0.25s ease;
+}
+
+.error-modal-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.error-modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #C62828;
+    margin: 0 0 10px;
+}
+
+.error-modal-message {
+    font-size: 14px;
+    color: #555;
+    margin: 0 0 24px;
+    line-height: 1.6;
+}
+
+.error-modal-close {
+    background: #3B4556;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 32px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.error-modal-close:hover {
+    background: #2c3444;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+}

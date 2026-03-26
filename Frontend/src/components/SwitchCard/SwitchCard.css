@@ -34,12 +34,69 @@
   top: -50px;
   left : 50%;
   transform: translateX(-50%);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
 .icon-container img {
   width: 40px;
   height: 40px;
   filter: brightness(0) invert(1);
+  transition: transform 0.3s ease;
+}
+
+/* ── Đèn điện (light) ON ── */
+.icon-on--light {
+  background: #FFB300;
+  box-shadow:
+    0 0 0 6px  rgba(255, 179, 0, 0.20),
+    0 0 0 12px rgba(255, 179, 0, 0.10),
+    0 0 20px 4px rgba(255, 179, 0, 0.35);
+  animation: lightPulse 2s ease-in-out infinite;
+}
+
+@keyframes lightPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 6px  rgba(255, 179, 0, 0.20),
+      0 0 0 12px rgba(255, 179, 0, 0.10),
+      0 0 20px 4px rgba(255, 179, 0, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px  rgba(255, 179, 0, 0.28),
+      0 0 0 16px rgba(255, 179, 0, 0.14),
+      0 0 30px 8px rgba(255, 179, 0, 0.45);
+  }
+}
+
+/* ── Quạt (fan) ON ── */
+.icon-on--fan {
+  background: #1E88E5;
+  box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
+}
+
+.fan-spinning {
+  animation: fanSpin 1s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes fanSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Máy lạnh (ac) ON ── */
+.icon-on--ac {
+  background: #00ACC1;
+  box-shadow: 0 4px 16px rgba(0, 172, 193, 0.4);
+}
+
+.icon-on--ac img {
+  animation: acFloat 1.8s ease-in-out infinite;
+}
+
+@keyframes acFloat {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-5px); }
 }
 
 .toggle-wrapper {
@@ -105,4 +162,36 @@
 .status span {
   font-weight: 600;
   color: #666;
+}
+
+/* Pending state */
+.switch-card.pending {
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.toggle-label--pending {
+  background: #B0BEC5 !important;
+  cursor: not-allowed;
+}
+
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ccc;
+  border-top-color: #3B4556;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

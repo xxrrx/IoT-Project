@@ -51,17 +51,21 @@ void setLed(uint8_t pin, bool& ledState, bool newState) {
   }
       ledState = newState;
 }
-void publishLedState() {
-    StaticJsonDocument<128> st;
-    st["led1"] = led1State;
-    st["led2"] = led2State;
-    st["led3"] = led3State;
+void publishLedState(const char* ledName, bool state) {
+    StaticJsonDocument<128> doc;
+
+    doc["led"] = ledName;
+    doc["state"] = state ? "ON" : "OFF";
+
     char buf[128];
-    serializeJson(st, buf);
+    serializeJson(doc, buf);
+
     client.publish("device/state", buf);
+
     Serial.println("Published LED state:");
     Serial.println(buf);
 }
+
 /* ========= MQTT CALLBACK ========= */
 void callback(char* topic, byte* payload, unsigned int length) {
     String msg;
@@ -84,19 +88,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
     bool newState = (strcmp(state, "ON") == 0);
     if (strcmp(led, "led1") == 0) {
         setLed(LED1, led1State, newState);
-          publishLedState();
-
-  }
+        publishLedState("led1", newState);
+    }
     else if (strcmp(led, "led2") == 0) {
         setLed(LED2, led2State, newState);
-          publishLedState();
-
-  }
+        publishLedState("led2", newState);
+    }
     else if (strcmp(led, "led3") == 0) {
         setLed(LED3, led3State, newState);
-          publishLedState();
-
-  }
+        publishLedState("led3", newState);
+    }
 }
 /* ========= MQTT RECONNECT ========= */
 void reconnect() {
