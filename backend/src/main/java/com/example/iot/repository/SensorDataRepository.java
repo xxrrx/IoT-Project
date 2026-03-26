@@ -1,6 +1,6 @@
 package com.example.iot.repository;
 
-import com.example.iot.domain.dto.SensorReading;
+import com.example.iot.domain.dto.SensorReadingDto;
 import com.example.iot.domain.entities.SensorData;
 import com.example.iot.domain.enums.SensorType;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Repository
 public interface SensorDataRepository  extends JpaRepository<SensorData, UUID> {
-    @Query("SELECT new com.example.iot.domain.dto.SensorReading(s.value, s.recordAt) " +
+    @Query("SELECT new com.example.iot.domain.dto.SensorReadingDto(s.value, s.recordAt) " +
             "FROM SensorData s WHERE s.sensors.sensorType = :type ORDER BY s.recordAt DESC")
-    List<SensorReading> findLatestBySensorType(@Param("type") SensorType type, Pageable pageable);
+    List<SensorReadingDto> findLatestBySensorType(@Param("type") SensorType type, Pageable pageable);
 }
