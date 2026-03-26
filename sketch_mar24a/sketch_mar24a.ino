@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 #include "DHT.h"
 /* ========= WIFI ========= */
-const char* ssid = "TP-LINK_C34A";
-const char* password = "75263638";
+const char* ssid = "com77777";
+const char* password = "abcd1234";
 /* ========= MQTT (HiveMQ Cloud) ========= */
 const char* mqtt_server   = "b069ed9f4ad24e53ab13d415211da7bb.s1.eu.hivemq.cloud";
 const int   mqtt_port     = 8883;
@@ -106,6 +106,18 @@ void reconnect() {
         if (client.connect("ESP32Client", mqtt_username, mqtt_password)) {
             Serial.println("connected");
             client.subscribe("device/control");
+
+            StaticJsonDocument<128> doc;
+            doc["device"] = "esp32";
+            doc["status"] = "online";
+
+            char buf[128];
+            serializeJson(doc, buf);
+
+            client.publish("esp32/status", buf);
+
+            Serial.println("Published startup status:");
+            Serial.println(buf);
 
     }
     else {

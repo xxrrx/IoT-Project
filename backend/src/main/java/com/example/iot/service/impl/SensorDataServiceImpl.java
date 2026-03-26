@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -31,11 +32,10 @@ public class SensorDataServiceImpl implements SensorDataService {
             SensorDataDto dto = objectMapper.readValue(payload, SensorDataDto.class);
 
             // Map mỗi field trong DTO với SensorType tương ứng
-            Map<SensorType, Double> readings = Map.of(
-                    SensorType.temperature, dto.temperature(),
-                    SensorType.humidity,    dto.humidity(),
-                    SensorType.light,       dto.light()
-            );
+            Map<SensorType, Double> readings = new HashMap<>();
+            if (dto.temperature() != null) readings.put(SensorType.temperature, dto.temperature());
+            if (dto.humidity()    != null) readings.put(SensorType.humidity,    dto.humidity());
+            if (dto.light()       != null) readings.put(SensorType.light,       dto.light());
 
             LocalDateTime now = LocalDateTime.now();
 

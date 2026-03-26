@@ -87,6 +87,17 @@ public class DeviceControlServiceImpl implements DeviceControlService {
 
     @Override
     public String controlDevice(String led, String state) {
+        Device device = deviceRepository.getDeviceByName(led).orElseThrow(() -> new IllegalArgumentException("Device not found"));
+        actionHistoryRepository.save(
+                new ActionHistory(
+                        null,
+                        device,
+                        device.getCurrentStatus(),
+                        DeviceStatus.valueOf(state),
+                        LocalDateTime.now()
+                )
+        );
+
         CompletableFuture<String> future = new CompletableFuture<>();
         pendingResponses.put(led, future);
         Mqtt5BlockingClient client = connect.getClient();
@@ -97,7 +108,6 @@ public class DeviceControlServiceImpl implements DeviceControlService {
                 .payload(UTF_8.encode(payload))
                 .send();
 
-        Device device = deviceRepository.getDeviceByName(led).orElseThrow(() -> new IllegalArgumentException("Device not found"));
         actionHistoryRepository.save(
             new ActionHistory(
                     null,

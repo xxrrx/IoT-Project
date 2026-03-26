@@ -92,7 +92,7 @@ const ActionHistory = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="filter-select"
               >
-                <option value="all">Trạng thái thiết bị</option>
+                <option value="all">Hành động</option>
                 <option value="on">On</option>
                 <option value="off">Off</option>
               </select>
