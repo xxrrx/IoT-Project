@@ -1,68 +1,168 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './ActionHistory.css'
 import { assets } from '../../assets/assets'
 
+const DEVICE_NAME_LABEL = { led1: 'Đèn điện', led2: 'Quạt điện', led3: 'Máy lạnh' }
+
+const formatDateTime = (iso) => {
+  const d = new Date(iso)
+  const pad = n => String(n).padStart(2, '0')
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
+}
+
 const ActionHistory = () => {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [deviceFilter, setDeviceFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [sortOrder, setSortOrder] = useState('desc')
-  const [itemsPerPage, setItemsPerPage] = useState(40)
-  const [showItemsDropdown, setShowItemsDropdown] = useState(false)
   const itemsOptions = [10, 20, 40, 50, 100]
+  const [showItemsDropdown, setShowItemsDropdown] = useState(false)
 
-  // Dữ liệu mẫu - thay thế bằng data từ API
-  const actionHistory = Array.from({ length: 1240 }, (_, index) => {
-    const devices = ['Đèn điện', 'Điều hòa', 'Quạt điện']
-    const actions = ['On', 'Off']
-    const statuses = ['ON', 'OFF', 'PENDING']
-    const device = devices[Math.floor(Math.random() * devices.length)]
-    const action = actions[Math.floor(Math.random() * actions.length)]
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
+  // Pending filter inputs (chưa gửi đi)
+  const [pendingDeviceName, setPendingDeviceName] = useState('')
+  const [pendingDeviceAction, setPendingDeviceAction] = useState('')
+  const [pendingTime, setPendingTime] = useState('')
 
-    return {
-      id: index + 1,
-      device: device,
-      action: action,
-      status: status,
-      timestamp: '03:05:24 17/01/2026'
-    }
+  // Query state — thay đổi object này để trigger useEffect gọi API
+  const [query, setQuery] = useState({
+    page: 1,
+    size: 40,
+    deviceName: '',
+    deviceAction: '',
+    time: '',
+    sortBy: 'descending',
   })
 
-  const totalPages = Math.ceil(actionHistory.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentData = actionHistory.slice(startIndex, endIndex)
+  // Dữ liệu trả về
+  const [data, setData] = useState([])
+  const [totalElements, setTotalElements] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [error, setError] = useState(null)
 
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const load = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const params = new URLSearchParams({
+          pageNo: query.page - 1, // API dùng 0-indexed
+          pageSize: query.size,
+          sortBy: query.sortBy,
+        })
+        if (query.deviceName) params.append('deviceName', query.deviceName)
+        if (query.deviceAction) params.append('deviceAction', query.deviceAction)
+        if (query.time) params.append('time', query.time)
+
+        const res = await fetch(`http://localhost:8080/action-history?${params}`, {
+          signal: controller.signal,
+        })
+        const json = await res.json()
+
+        if (!res.ok) {
+          setError(json.message || 'Có lỗi xảy ra khi tải dữ liệu')
+          setData([])
+          setTotalElements(0)
+          setTotalPages(0)
+          return
+        }
+
+        setData(json.content || [])
+        setTotalElements(json.totalElements || 0)
+        setTotalPages(json.totalPages || 0)
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError('Không thể kết nối đến server')
+          setData([])
+          setTotalElements(0)
+          setTotalPages(0)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    load()
+    return () => controller.abort()
+  }, [query])
+
+  // Bấm Tìm kiếm — áp dụng filter đang nhập, reset về trang 1
+  const handleSearch = () => {
+    setQuery(prev => ({
+      ...prev,
+      page: 1,
+      deviceName: pendingDeviceName,
+      deviceAction: pendingDeviceAction,
+      time: pendingTime,
+    }))
+  }
+
+  // Làm mới — tạo object mới để trigger useEffect với cùng params
   const handleRefresh = () => {
-    console.log('Refreshing action history...')
-    // TODO: Gọi API để refresh dữ liệu
+    setQuery(prev => ({ ...prev }))
   }
 
-  const handleExportCSV = () => {
-    console.log('Exporting action history to CSV...')
-    // TODO: Xuất dữ liệu ra file CSV
+  // Xuất CSV toàn bộ bản ghi với filter và sort hiện tại
+  const handleExportCSV = async () => {
+    if (totalElements === 0) return
+    setExporting(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({
+        pageNo: 0,
+        pageSize: totalElements,
+        sortBy: query.sortBy,
+      })
+      if (query.deviceName) params.append('deviceName', query.deviceName)
+      if (query.deviceAction) params.append('deviceAction', query.deviceAction)
+      if (query.time) params.append('time', query.time)
+
+      const res = await fetch(`http://localhost:8080/action-history?${params}`)
+      const json = await res.json()
+
+      if (!res.ok) {
+        setError(json.message || 'Có lỗi xảy ra khi xuất dữ liệu')
+        return
+      }
+
+      const allRecords = json.content || []
+      const headers = ['STT', 'Thiết bị', 'Hành động', 'Trạng thái', 'Thời gian']
+      const rows = allRecords.map((row, i) => [
+        i + 1,
+        DEVICE_NAME_LABEL[row.deviceName] || row.deviceName,
+        row.deviceAction,
+        row.deviceStatus,
+        formatDateTime(row.performedAt),
+      ])
+      const csv = [headers, ...rows]
+        .map(r => r.map(c => `"${c}"`).join(','))
+        .join('\n')
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'action-history-all.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Không thể kết nối đến server khi xuất dữ liệu')
+    } finally {
+      setExporting(false)
+    }
   }
+
+  const startIndex = (query.page - 1) * query.size
 
   const renderPageNumbers = () => {
     const pages = []
-    const maxVisiblePages = 5
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else if (query.page <= 3) {
+      pages.push(1, 2, 3, '...', totalPages)
+    } else if (query.page >= totalPages - 2) {
+      pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages)
     } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, '...', totalPages)
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages)
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
-      }
+      pages.push(1, '...', query.page - 1, query.page, query.page + 1, '...', totalPages)
     }
-    
     return pages
   }
 
@@ -70,57 +170,64 @@ const ActionHistory = () => {
     <div className="action-history-container">
       <div className="action-history-card">
         <h1 className="page-title">Bảng lịch sử hành động</h1>
-        
+
         <div className="controls-wrapper">
           <div className="left-controls">
             <div className="filter-dropdown">
-              <select 
-                value={deviceFilter} 
-                onChange={(e) => setDeviceFilter(e.target.value)}
+              <select
+                value={pendingDeviceName}
+                onChange={e => setPendingDeviceName(e.target.value)}
                 className="filter-select"
               >
-                <option value="all">Tên thiết bị</option>
-                <option value="light">Đèn điện</option>
-                <option value="airconditioner">Điều hòa</option>
-                <option value="fan">Quạt điện</option>
+                <option value="">Tất cả thiết bị</option>
+                <option value="led1">Đèn điện</option>
+                <option value="led2">Quạt điện</option>
+                <option value="led3">Máy lạnh</option>
               </select>
             </div>
-            
+
             <div className="filter-dropdown">
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
+              <select
+                value={pendingDeviceAction}
+                onChange={e => setPendingDeviceAction(e.target.value)}
                 className="filter-select"
               >
-                <option value="all">Hành động</option>
-                <option value="on">On</option>
-                <option value="off">Off</option>
+                <option value="">Tất cả hành động</option>
+                <option value="ON">ON</option>
+                <option value="OFF">OFF</option>
               </select>
             </div>
-            
+
             <div className="search-box">
               <img src={assets.magnifyingGlass} alt="search" className="search-icon" />
-              <input 
-                type="text" 
-                placeholder="Thời gian tìm kiếm dữ liệu"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              <input
+                type="text"
+                placeholder="Thời gian (VD: 2026/03/27)"
+                value={pendingTime}
+                onChange={e => setPendingTime(e.target.value)}
                 className="search-input"
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
               />
             </div>
+
+            <button className="btn-search" onClick={handleSearch}>
+              Tìm kiếm
+            </button>
           </div>
-          
+
           <div className="right-controls">
             <button className="btn-refresh" onClick={handleRefresh}>
               <img src={assets.arrowsRotate} alt="refresh" />
               Làm mới
             </button>
-            <button className="btn-export" onClick={handleExportCSV}>
+            <button className="btn-export" onClick={handleExportCSV} disabled={totalElements === 0 || exporting}>
               <img src={assets.fileExport} alt="export" />
-              Xuất file csv
+              {exporting ? 'Đang xuất...' : 'Xuất file csv'}
             </button>
           </div>
         </div>
+
+        {error && <div className="error-message">{error}</div>}
 
         <div className="table-container">
           <table className="data-table">
@@ -130,46 +237,56 @@ const ActionHistory = () => {
                 <th>Thiết bị</th>
                 <th>Hành động</th>
                 <th>Trạng thái</th>
-                <th className="sortable" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                  Thời gian
-                  <img src={assets.angleDown} alt="sort" className={`sort-icon ${sortOrder}`} />
-                </th>
+                <th>Thời gian</th>
               </tr>
             </thead>
             <tbody>
-              {currentData.map((row, index) => (
-                <tr key={row.id}>
-                  <td>{startIndex + index + 1}</td>
-                  <td>{row.device}</td>
-                  <td>
-                    <span className={`action-badge ${row.action.toLowerCase()}`}>
-                      {row.action}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${row.status.toLowerCase()}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>{row.timestamp}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="loading-cell">Đang tải dữ liệu...</td>
                 </tr>
-              ))}
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="empty-cell">Không có dữ liệu</td>
+                </tr>
+              ) : (
+                data.map((row, index) => (
+                  <tr key={index}>
+                    <td>{startIndex + index + 1}</td>
+                    <td>{DEVICE_NAME_LABEL[row.deviceName] || row.deviceName}</td>
+                    <td>
+                      <span className={`action-badge ${row.deviceAction.toLowerCase()}`}>
+                        {row.deviceAction}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${row.deviceStatus.toLowerCase()}`}>
+                        {row.deviceStatus}
+                      </span>
+                    </td>
+                    <td>{formatDateTime(row.performedAt)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="pagination-wrapper">
           <div className="pagination-info">
-            Hiển thị {startIndex + 1}-{Math.min(endIndex, actionHistory.length)} trên {actionHistory.length.toLocaleString()} kết quả
+            {totalElements > 0
+              ? `Hiển thị ${startIndex + 1}–${Math.min(startIndex + query.size, totalElements)} trên ${totalElements.toLocaleString()} kết quả`
+              : 'Không có kết quả'
+            }
           </div>
-          
+
           <div className="pagination-controls">
             <div className="items-per-page-wrapper">
               <div
                 className="items-per-page"
                 onClick={() => setShowItemsDropdown(!showItemsDropdown)}
               >
-                <span>{itemsPerPage} dòng</span>
+                <span>{query.size} dòng</span>
                 <img
                   src={assets.angleDown}
                   alt="dropdown"
@@ -181,10 +298,9 @@ const ActionHistory = () => {
                   {itemsOptions.map(opt => (
                     <li
                       key={opt}
-                      className={`items-dropdown-item ${opt === itemsPerPage ? 'active' : ''}`}
+                      className={`items-dropdown-item ${opt === query.size ? 'active' : ''}`}
                       onClick={() => {
-                        setItemsPerPage(opt)
-                        setCurrentPage(1)
+                        setQuery(prev => ({ ...prev, page: 1, size: opt }))
                         setShowItemsDropdown(false)
                       }}
                     >
@@ -194,33 +310,33 @@ const ActionHistory = () => {
                 </ul>
               )}
             </div>
-            
-            <button 
+
+            <button
               className="page-nav"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              onClick={() => setQuery(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={query.page === 1}
             >
               ‹
             </button>
-            
-            {renderPageNumbers().map((page, index) => (
+
+            {renderPageNumbers().map((page, index) =>
               page === '...' ? (
                 <span key={`ellipsis-${index}`} className="page-ellipsis">...</span>
               ) : (
                 <button
                   key={page}
-                  className={`page-number ${currentPage === page ? 'active' : ''}`}
-                  onClick={() => setCurrentPage(page)}
+                  className={`page-number ${query.page === page ? 'active' : ''}`}
+                  onClick={() => setQuery(prev => ({ ...prev, page }))}
                 >
                   {page}
                 </button>
               )
-            ))}
-            
-            <button 
+            )}
+
+            <button
               className="page-nav"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => setQuery(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={query.page === totalPages || totalPages === 0}
             >
               ›
             </button>

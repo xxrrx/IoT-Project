@@ -15,12 +15,13 @@ public class DataSensorController {
     }
 
     @GetMapping
-    public Page<DataSensorDto> pagingSortingAndFilteringBySensorTypeAndTime(@RequestParam int page,
-                                                                            @RequestParam int size,
-                                                                            @RequestBody String sensorTye,
-                                                                            @RequestBody String time,
-                                                                            @RequestBody String sortBy){
+    public Page<DataSensorDto> pagingSortingAndFilteringBySensorTypeAndTime(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(required = false) String sensorType,
+            @RequestParam(required = false) String time,
+            @RequestParam(defaultValue = "descending") String sortBy) {
 
-        return dataSensorService.findBySensorTypeAndTime(page,size,sensorTye,time,sortBy);
+        return dataSensorService.findBySensorTypeAndTime(page, size, sensorType, time, sortBy);
     }
 }

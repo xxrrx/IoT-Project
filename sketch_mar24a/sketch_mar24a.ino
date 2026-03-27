@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 #include "DHT.h"
 /* ========= WIFI ========= */
-const char* ssid = "com77777";
-const char* password = "abcd1234";
+const char* ssid = "TP-LINK_C34A";
+const char* password = "75263638";
 /* ========= MQTT (HiveMQ Cloud) ========= */
 const char* mqtt_server   = "b069ed9f4ad24e53ab13d415211da7bb.s1.eu.hivemq.cloud";
 const int   mqtt_port     = 8883;

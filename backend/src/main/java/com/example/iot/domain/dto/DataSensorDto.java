@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public record DataSensorDto(
         SensorType sensorType,
-        Double value,
+        Float value,
         LocalDateTime recordAt
 ) {
 }

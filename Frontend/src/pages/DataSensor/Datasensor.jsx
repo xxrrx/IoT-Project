@@ -1,62 +1,163 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './Datasensor.css'
 import { assets } from '../../assets/assets'
 
+const SENSOR_TYPE_LABEL = { light: 'Ánh sáng', temperature: 'Nhiệt độ', humidity: 'Độ ẩm' }
+const SENSOR_UNIT = { light: 'lx', temperature: '°C', humidity: '%' }
+
+const formatDateTime = (iso) => {
+  const d = new Date(iso)
+  const pad = n => String(n).padStart(2, '0')
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
+}
+
 const Datasensor = () => {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState('all')
-  const [sortOrder, setSortOrder] = useState('desc')
-  const [itemsPerPage, setItemsPerPage] = useState(40)
-  const [showItemsDropdown, setShowItemsDropdown] = useState(false)
   const itemsOptions = [10, 20, 40, 50, 100]
+  const [showItemsDropdown, setShowItemsDropdown] = useState(false)
+  // Pending filter inputs (chưa gửi đi)
+  const [pendingSensorType, setPendingSensorType] = useState('')
+  const [pendingTime, setPendingTime] = useState('')
 
-  // Dữ liệu mẫu - thay thế bằng data từ API
-  const sensorTypes = [
-    { type: 'Nhiệt độ', value: '19 °C' },
-    { type: 'Ánh sáng', value: '100 lx' },
-    { type: 'Độ ẩm', value: '92 %' },
-  ]
-  const sensorData = Array.from({ length: 1240 }, (_, index) => ({
-    id: index + 1,
-    sensorType: sensorTypes[index % 3].type,
-    sensorValue: sensorTypes[index % 3].value,
-    timestamp: '03:05:24 17/01/2026'
-  }))
+  // Query state — thay đổi object này để trigger useEffect gọi API
+  const [query, setQuery] = useState({
+    page: 1,
+    size: 40,
+    sensorType: '',
+    time: '',
+    sortBy: 'descending',
+  })
 
-  const totalPages = Math.ceil(sensorData.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentData = sensorData.slice(startIndex, endIndex)
+  // Dữ liệu trả về
+  const [data, setData] = useState([])
+  const [totalElements, setTotalElements] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [error, setError] = useState(null)
 
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const load = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const params = new URLSearchParams({
+          page: query.page - 1, // API dùng 0-indexed
+          size: query.size,
+          sortBy: query.sortBy,
+        })
+        if (query.sensorType) params.append('sensorType', query.sensorType)
+        if (query.time) params.append('time', query.time)
+
+        const res = await fetch(`http://localhost:8080/data-sensor?${params}`, {
+          signal: controller.signal,
+        })
+        const json = await res.json()
+
+        if (!res.ok) {
+          setError(json.message || 'Có lỗi xảy ra khi tải dữ liệu')
+          setData([])
+          setTotalElements(0)
+          setTotalPages(0)
+          return
+        }
+
+        setData(json.content || [])
+        setTotalElements(json.totalElements || 0)
+        setTotalPages(json.totalPages || 0)
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError('Không thể kết nối đến server')
+          setData([])
+          setTotalElements(0)
+          setTotalPages(0)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    load()
+    return () => controller.abort()
+  }, [query])
+
+  // Bấm Tìm kiếm — áp dụng filter đang nhập, reset về trang 1
+  const handleSearch = () => {
+    setQuery(prev => ({
+      ...prev,
+      page: 1,
+      sensorType: pendingSensorType,
+      time: pendingTime,
+    }))
+  }
+
+  // Làm mới — tạo object mới để trigger useEffect với cùng params
   const handleRefresh = () => {
-    console.log('Refreshing data...')
-    // TODO: Gọi API để refresh dữ liệu
+    setQuery(prev => ({ ...prev }))
   }
 
-  const handleExportCSV = () => {
-    console.log('Exporting to CSV...')
-    // TODO: Xuất dữ liệu ra file CSV
+  // Xuất CSV toàn bộ bản ghi với filter và sort hiện tại
+  const handleExportCSV = async () => {
+    if (totalElements === 0) return
+    setExporting(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({
+        page: 0,
+        size: totalElements,
+        sortBy: query.sortBy,
+      })
+      if (query.sensorType) params.append('sensorType', query.sensorType)
+      if (query.time) params.append('time', query.time)
+
+      const res = await fetch(`http://localhost:8080/data-sensor?${params}`)
+      const json = await res.json()
+
+      if (!res.ok) {
+        setError(json.message || 'Có lỗi xảy ra khi xuất dữ liệu')
+        return
+      }
+
+      const allRecords = json.content || []
+      const headers = ['STT', 'Loại cảm biến', 'Giá trị', 'Đơn vị', 'Thời gian']
+      const rows = allRecords.map((row, i) => [
+        i + 1,
+        SENSOR_TYPE_LABEL[row.sensorType] || row.sensorType,
+        row.value,
+        SENSOR_UNIT[row.sensorType] || '',
+        formatDateTime(row.recordAt),
+      ])
+      const csv = [headers, ...rows]
+        .map(r => r.map(c => `"${c}"`).join(','))
+        .join('\n')
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `sensor-data-all.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Không thể kết nối đến server khi xuất dữ liệu')
+    } finally {
+      setExporting(false)
+    }
   }
+
+  const startIndex = (query.page - 1) * query.size
 
   const renderPageNumbers = () => {
     const pages = []
-    const maxVisiblePages = 5
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else if (query.page <= 3) {
+      pages.push(1, 2, 3, '...', totalPages)
+    } else if (query.page >= totalPages - 2) {
+      pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages)
     } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, '...', totalPages)
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages)
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
-      }
+      pages.push(1, '...', query.page - 1, query.page, query.page + 1, '...', totalPages)
     }
-    
     return pages
   }
 
@@ -64,45 +165,52 @@ const Datasensor = () => {
     <div className="datasensor-container">
       <div className="datasensor-card">
         <h1 className="page-title">Bảng dữ liệu cảm biến</h1>
-        
+
         <div className="controls-wrapper">
           <div className="left-controls">
             <div className="filter-dropdown">
-              <select 
-                value={filterType} 
-                onChange={(e) => setFilterType(e.target.value)}
+              <select
+                value={pendingSensorType}
+                onChange={e => setPendingSensorType(e.target.value)}
                 className="filter-select"
               >
-                <option value="all">Tất cả loại cảm biến</option>
-                <option value="Nhiệt độ">Nhiệt độ</option>
-                <option value="Ánh sáng">Ánh sáng</option>
-                <option value="Độ ẩm">Độ ẩm</option>
+                <option value="">Tất cả cảm biến</option>
+                <option value="temperature">Nhiệt độ</option>
+                <option value="light">Ánh sáng</option>
+                <option value="humidity">Độ ẩm</option>
               </select>
             </div>
-            
+
             <div className="search-box">
               <img src={assets.magnifyingGlass} alt="search" className="search-icon" />
-              <input 
-                type="text" 
-                placeholder="Tìm kiếm dữ liệu"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              <input
+                type="text"
+                placeholder="Thời gian (VD: 2026/03/27)"
+                value={pendingTime}
+                onChange={e => setPendingTime(e.target.value)}
                 className="search-input"
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
               />
             </div>
+
+            <button className="btn-search" onClick={handleSearch}>
+              Tìm kiếm
+            </button>
           </div>
-          
+
           <div className="right-controls">
             <button className="btn-refresh" onClick={handleRefresh}>
               <img src={assets.arrowsRotate} alt="refresh" />
               Làm mới
             </button>
-            <button className="btn-export" onClick={handleExportCSV}>
+            <button className="btn-export" onClick={handleExportCSV} disabled={totalElements === 0 || exporting}>
               <img src={assets.fileExport} alt="export" />
-              Xuất file csv
+              {exporting ? 'Đang xuất...' : 'Xuất file csv'}
             </button>
           </div>
         </div>
+
+        {error && <div className="error-message">{error}</div>}
 
         <div className="table-container">
           <table className="data-table">
@@ -111,37 +219,47 @@ const Datasensor = () => {
                 <th>STT</th>
                 <th>Loại cảm biến</th>
                 <th>Giá trị cảm biến</th>
-                <th className="sortable" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                  Thời gian
-                  <img src={assets.angleDown} alt="sort" className={`sort-icon ${sortOrder}`} />
-                </th>
+                <th>Thời gian</th>
               </tr>
             </thead>
             <tbody>
-              {currentData.map((row, index) => (
-                <tr key={row.id}>
-                  <td>{startIndex + index + 1}</td>
-                  <td>{row.sensorType}</td>
-                  <td>{row.sensorValue}</td>
-                  <td>{row.timestamp}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="loading-cell">Đang tải dữ liệu...</td>
                 </tr>
-              ))}
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="empty-cell">Không có dữ liệu</td>
+                </tr>
+              ) : (
+                data.map((row, index) => (
+                  <tr key={index}>
+                    <td>{startIndex + index + 1}</td>
+                    <td>{SENSOR_TYPE_LABEL[row.sensorType] || row.sensorType}</td>
+                    <td>{row.value} {SENSOR_UNIT[row.sensorType] || ''}</td>
+                    <td>{formatDateTime(row.recordAt)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="pagination-wrapper">
           <div className="pagination-info">
-            Hiển thị {startIndex + 1}-{Math.min(endIndex, sensorData.length)} trên {sensorData.length.toLocaleString()} kết quả
+            {totalElements > 0
+              ? `Hiển thị ${startIndex + 1}–${Math.min(startIndex + query.size, totalElements)} trên ${totalElements.toLocaleString()} kết quả`
+              : 'Không có kết quả'
+            }
           </div>
-          
+
           <div className="pagination-controls">
             <div className="items-per-page-wrapper">
               <div
                 className="items-per-page"
                 onClick={() => setShowItemsDropdown(!showItemsDropdown)}
               >
-                <span>{itemsPerPage} dòng</span>
+                <span>{query.size} dòng</span>
                 <img
                   src={assets.angleDown}
                   alt="dropdown"
@@ -153,10 +271,9 @@ const Datasensor = () => {
                   {itemsOptions.map(opt => (
                     <li
                       key={opt}
-                      className={`items-dropdown-item ${opt === itemsPerPage ? 'active' : ''}`}
+                      className={`items-dropdown-item ${opt === query.size ? 'active' : ''}`}
                       onClick={() => {
-                        setItemsPerPage(opt)
-                        setCurrentPage(1)
+                        setQuery(prev => ({ ...prev, page: 1, size: opt }))
                         setShowItemsDropdown(false)
                       }}
                     >
@@ -166,33 +283,33 @@ const Datasensor = () => {
                 </ul>
               )}
             </div>
-            
-            <button 
+
+            <button
               className="page-nav"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              onClick={() => setQuery(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={query.page === 1}
             >
               ‹
             </button>
-            
-            {renderPageNumbers().map((page, index) => (
+
+            {renderPageNumbers().map((page, index) =>
               page === '...' ? (
                 <span key={`ellipsis-${index}`} className="page-ellipsis">...</span>
               ) : (
                 <button
                   key={page}
-                  className={`page-number ${currentPage === page ? 'active' : ''}`}
-                  onClick={() => setCurrentPage(page)}
+                  className={`page-number ${query.page === page ? 'active' : ''}`}
+                  onClick={() => setQuery(prev => ({ ...prev, page }))}
                 >
                   {page}
                 </button>
               )
-            ))}
-            
-            <button 
+            )}
+
+            <button
               className="page-nav"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => setQuery(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={query.page === totalPages || totalPages === 0}
             >
               ›
             </button>
@@ -204,3 +321,4 @@ const Datasensor = () => {
 }
 
 export default Datasensor
+

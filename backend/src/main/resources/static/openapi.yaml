@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: IOT Project API
+  description: API quản lý thiết bị và dữ liệu cảm biến IoT
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+tags:
+  - name: Action History
+    description: Lịch sử hành động điều khiển thiết bị
+  - name: Data Sensor
+    description: Dữ liệu cảm biến (nhiệt độ, độ ẩm, ánh sáng)
+  - name: Dashboard
+    description: Dashboard tổng quan, điều khiển thiết bị, stream dữ liệu
+
+paths:
+  /action-history:
+    get:
+      tags:
+        - Action History
+      summary: Lấy lịch sử hành động
+      description: Hỗ trợ lọc theo tên thiết bị, trạng thái, thời gian và phân trang
+      parameters:
+        - name: pageNo
+          in: query
+          required: true
+          description: Số trang (bắt đầu từ 0)
+          schema:
+            type: integer
+            example: 0
+        - name: pageSize
+          in: query
+          required: true
+          description: Số bản ghi mỗi trang
+          schema:
+            type: integer
+            example: 10
+        - name: deviceName
+          in: query
+          required: false
+          description: Tên thiết bị cần lọc
+          schema:
+            type: string
+            example: Fan
+        - name: deviceAction
+          in: query
+          required: false
+          description: Trạng thái hành động
+          schema:
+            type: string
+            enum: [ON, OFF, PENDING]
+        - name: time
+          in: query
+          required: false
+          description: Ngày lọc theo định dạng yyyy-MM-dd
+          schema:
+            type: string
+            example: "2026-03-27"
+        - name: sortBy
+          in: query
+          required: false
+          description: Thứ tự sắp xếp theo thời gian
+          schema:
+            type: string
+            enum: [ascending, descending]
+            default: descending
+      responses:
+        "200":
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageActionHistoryDto"
+        "500":
+          description: Lỗi server
+
+  /data-sensor:
+    get:
+      tags:
+        - Data Sensor
+      summary: Lấy dữ liệu cảm biến
+      description: Hỗ trợ lọc theo loại cảm biến, thời gian và phân trang
+      parameters:
+        - name: page
+          in: query
+          required: true
+          description: Số trang (bắt đầu từ 0)
+          schema:
+            type: integer
+            example: 0
+        - name: size
+          in: query
+          required: true
+          description: Số bản ghi mỗi trang
+          schema:
+            type: integer
+            example: 10
+        - name: sensorType
+          in: query
+          required: false
+          description: Loại cảm biến cần lọc
+          schema:
+            type: string
+            enum: [temperature, humidity, light]
+        - name: time
+          in: query
+          required: false
+          description: Ngày lọc theo định dạng yyyy-MM-dd
+          schema:
+            type: string
+            example: "2026-03-27"
+        - name: sortBy
+          in: query
+          required: false
+          description: Thứ tự sắp xếp theo thời gian
+          schema:
+            type: string
+            enum: [ascending, descending]
+            default: descending
+      responses:
+        "200":
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageDataSensorDto"
+        "500":
+          description: Lỗi server
+
+  /dashboard/chart:
+    get:
+      tags:
+        - Dashboard
+      summary: Lấy dữ liệu biểu đồ
+      description: Trả về N bản ghi gần nhất của từng loại cảm biến kèm giá trị trung bình
+      parameters:
+        - name: quantity
+          in: query
+          required: true
+          description: Số lượng bản ghi gần nhất muốn lấy
+          schema:
+            type: integer
+            example: 20
+      responses:
+        "200":
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardDataDto"
+        "500":
+          description: Lỗi server
+
+  /dashboard/sensor/stream:
+    get:
+      tags:
+        - Dashboard
+      summary: Stream dữ liệu cảm biến realtime (SSE)
+      description: Kết nối Server-Sent Events để nhận dữ liệu cảm biến realtime từ ESP32
+      responses:
+        "200":
+          description: Stream SSE thành công
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/SensorDataDto"
+
+  /dashboard/device-control:
+    post:
+      tags:
+        - Dashboard
+      summary: Điều khiển thiết bị
+      description: Gửi lệnh bật/tắt thiết bị qua MQTT, chờ phản hồi từ ESP32 tối đa 7 giây
+      parameters:
+        - name: led
+          in: query
+          required: true
+          description: Tên thiết bị cần điều khiển
+          schema:
+            type: string
+            example: Fan
+        - name: state
+          in: query
+          required: true
+          description: Trạng thái muốn đặt
+          schema:
+            type: string
+            enum: [ON, OFF]
+      responses:
+        "200":
+          description: Điều khiển thành công hoặc thất bại
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: '{"success":"True","message":"Đèn Fan được ON thành công"}'
+                failure:
+                  value: '{"success":"False","message":"Đèn Fan được ON không thành công"}'
+        "400":
+          description: Timeout chờ phản hồi từ thiết bị
+        "500":
+          description: Lỗi server
+
+  /dashboard/device-state:
+    get:
+      tags:
+        - Dashboard
+      summary: Lấy trạng thái tất cả thiết bị
+      description: Trả về trạng thái hiện tại (ON/OFF/PENDING) của toàn bộ thiết bị
+      responses:
+        "200":
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum: [ON, OFF, PENDING]
+              example:
+                Fan: ON
+                Light: OFF
+                AC: PENDING
+        "500":
+          description: Lỗi server
+
+components:
+  schemas:
+    ActionHistoryDto:
+      type: object
+      properties:
+        deviceName:
+          type: string
+          example: Fan
+        deviceAction:
+          type: string
+          enum: [ON, OFF, PENDING]
+        deviceStatus:
+          type: string
+          enum: [ON, OFF, PENDING]
+        performedAt:
+          type: string
+          format: date-time
+          example: "2026-03-27T10:30:00"
+
+    PageActionHistoryDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionHistoryDto"
+        totalElements:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 10
+        size:
+          type: integer
+          example: 10
+        number:
+          type: integer
+          example: 0
+
+    DataSensorDto:
+      type: object
+      properties:
+        sensorType:
+          type: string
+          enum: [temperature, humidity, light]
+        value:
+          type: number
+          format: float
+          example: 28.5
+        recordAt:
+          type: string
+          format: date-time
+          example: "2026-03-27T10:30:00"
+
+    PageDataSensorDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataSensorDto"
+        totalElements:
+          type: integer
+          example: 500
+        totalPages:
+          type: integer
+          example: 50
+        size:
+          type: integer
+          example: 10
+        number:
+          type: integer
+          example: 0
+
+    SensorReadingDto:
+      type: object
+      properties:
+        value:
+          type: number
+          format: float
+          example: 28.5
+        recordAt:
+          type: string
+          format: date-time
+          example: "2026-03-27T10:30:00"
+
+    DashboardDataDto:
+      type: object
+      properties:
+        temperature:
+          type: array
+          items:
+            $ref: "#/components/schemas/SensorReadingDto"
+        humidity:
+          type: array
+          items:
+            $ref: "#/components/schemas/SensorReadingDto"
+        light:
+          type: array
+          items:
+            $ref: "#/components/schemas/SensorReadingDto"
+        avarageTemp:
+          type: number
+          format: double
+          example: 27.3
+        avarageHumidity:
+          type: number
+          format: double
+          example: 65.2
+        avarageLight:
+          type: number
+          format: double
+          example: 480.0

@@ -13,13 +13,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DataSensorServiceInpl implements DataSensorService {
+public class DataSensorServiceImpl implements DataSensorService {
     private final SensorDataRepository sensorDataRepository;
-    private final TimeValidate timeValidate;
 
-    public DataSensorServiceInpl(SensorDataRepository sensorDataRepository, TimeValidate timeValidate) {
+    public DataSensorServiceImpl(SensorDataRepository sensorDataRepository ) {
         this.sensorDataRepository = sensorDataRepository;
-        this.timeValidate = timeValidate;
     }
 
     @Override

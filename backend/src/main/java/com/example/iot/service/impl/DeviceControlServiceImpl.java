@@ -59,17 +59,15 @@ public class DeviceControlServiceImpl implements DeviceControlService {
             existingDevice.setCurrentStatus(DeviceStatus.valueOf(state));
             deviceRepository.save(existingDevice);
 
-
-            actionHistoryRepository.save(new ActionHistory(
-                    null,
-                    existingDevice,
-                    DeviceStatus.valueOf(state),
-                    existingDevice.getCurrentStatus(),
-                    LocalDateTime.now()
-            ));
-
             CompletableFuture<String> future = pendingResponses.get(ledName);
             if (future != null) {
+                actionHistoryRepository.save(new ActionHistory(
+                        null,
+                        existingDevice,
+                        DeviceStatus.valueOf(state),
+                        existingDevice.getCurrentStatus(),
+                        LocalDateTime.now()
+                ));
                 if(check != 0){
                     future.complete(String.format("{\"success\":\"True\",\"message\":\"Đèn %s được %s thành công\"}",ledName,state));
                 }else{
@@ -119,7 +117,7 @@ public class DeviceControlServiceImpl implements DeviceControlService {
         );
 
         try{
-            return future.get(10, TimeUnit.SECONDS);
+            return future.get(7, TimeUnit.SECONDS);
         } catch (TimeoutException e){
             throw new IllegalArgumentException("Lỗi khi chờ phản hồi từ thiết bị");
         }catch (Exception e) {

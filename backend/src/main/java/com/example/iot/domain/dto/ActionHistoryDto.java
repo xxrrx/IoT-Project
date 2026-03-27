@@ -1,4 +1,13 @@
 package com.example.iot.domain.dto;
 
-public record ActionHistoryDto() {
+import com.example.iot.domain.enums.DeviceStatus;
+
+import java.time.LocalDateTime;
+
+public record ActionHistoryDto(
+        String deviceName,
+        DeviceStatus deviceAction,
+        DeviceStatus deviceStatus,
+        LocalDateTime performedAt
+) {
 }
