@@ -95,6 +95,8 @@ const Profile = () => {
                 href={resource.link}
                 className="resource-card"
                 style={{ borderLeft: `4px solid ${resource.accent}` }}
+                target="_blank"
+                rel="noreferrer"
               >
                 <div
                   className="resource-icon"
