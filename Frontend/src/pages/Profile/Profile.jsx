@@ -1,6 +1,7 @@
 import React from 'react'
 import './Profile.css'
 import { assets } from '../../assets/assets'
+import ActionHistory from '../ActionHistory/ActionHistory'
 
 const Profile = () => {
   const profileData = {
