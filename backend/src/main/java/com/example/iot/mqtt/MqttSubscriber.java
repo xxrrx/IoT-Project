@@ -61,8 +61,7 @@ public class MqttSubscriber {
 
             if (topic.equals("iot/sensor/data")) {
                 lastReceivedTime = System.currentTimeMillis();
-                sensorDataService.saveFromMqtt(payload);
-                SensorDataDto dto = sensorDataService.sendToFE(payload);
+                SensorDataDto dto = sensorDataService.saveFromMqtt(payload);
                 if (dto != null) {
                     sseEmitterService.sendToAll(dto);
                 }

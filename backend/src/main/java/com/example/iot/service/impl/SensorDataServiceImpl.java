@@ -27,11 +27,10 @@ public class SensorDataServiceImpl implements SensorDataService {
     }
 
     @Override
-    public void saveFromMqtt(String payload) {
+    public SensorDataDto saveFromMqtt(String payload) {
         try {
             SensorDataDto dto = objectMapper.readValue(payload, SensorDataDto.class);
 
-            // Map mỗi field trong DTO với SensorType tương ứng
             Map<SensorType, Double> readings = new HashMap<>();
             if (dto.temperature() != null) readings.put(SensorType.temperature, dto.temperature());
             if (dto.humidity()    != null) readings.put(SensorType.humidity,    dto.humidity());
@@ -54,18 +53,8 @@ public class SensorDataServiceImpl implements SensorDataService {
                         },
                         () -> System.err.println("Không tìm thấy sensor với type: " + type)
                 );
-
             });
 
-        } catch (Exception e) {
-            System.err.println("Lỗi xử lý MQTT payload: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public SensorDataDto sendToFE(String payload) {
-        try {
-            SensorDataDto dto = objectMapper.readValue(payload, SensorDataDto.class);
             return dto;
         } catch (Exception e) {
             System.err.println("Lỗi xử lý MQTT payload: " + e.getMessage());
